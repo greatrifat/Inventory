@@ -3,6 +3,8 @@ import connectDB from '@/lib/mongodb';
 import Counter from '@/models/Counter';
 import { getSession } from '@/lib/auth';
 
+const BILL_START = 10001;
+
 export async function GET() {
   try {
     const session = await getSession();
@@ -12,9 +14,14 @@ export async function GET() {
 
     await connectDB();
 
-    // Peek at the next bill number without incrementing
     const counter = await Counter.findById('billNo');
-    const nextBillNo = counter ? counter.seq + 1 : 10001;
+
+    let nextBillNo: number;
+    if (!counter || !counter.seq || counter.seq < BILL_START) {
+      nextBillNo = BILL_START;
+    } else {
+      nextBillNo = counter.seq + 1;
+    }
 
     return NextResponse.json({ success: true, nextBillNo });
   } catch (error) {
