@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import {
-  Search, Eye, Download, Trash2, ChevronLeft, ChevronRight, FileText,
+  Search, Eye, Pencil, Trash2, ChevronLeft, ChevronRight, FileText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,8 +14,6 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
   DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
-import { generateInvoicePDF } from '@/lib/pdf';
-import { Bill } from '@/types';
 
 interface BillListItem {
   _id: string;
@@ -46,7 +44,6 @@ export default function BillHistoryPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const fetchBills = useCallback(async () => {
     setLoading(true);
@@ -97,23 +94,6 @@ export default function BillHistoryPage() {
     }
   };
 
-  const handleDownload = async (id: string) => {
-    setDownloadingId(id);
-    try {
-      const res = await fetch(`/api/bills/${id}`);
-      const data = await res.json();
-      if (data.success) {
-        await generateInvoicePDF(data.data as Bill);
-        toast.success('PDF downloaded');
-      } else {
-        toast.error('Failed to fetch bill data');
-      }
-    } catch {
-      toast.error('Failed to generate PDF');
-    } finally {
-      setDownloadingId(null);
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -201,12 +181,11 @@ export default function BillHistoryPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleDownload(bill._id)}
-                            disabled={downloadingId === bill._id}
-                            className="h-8 w-8 text-gray-500 hover:text-green-600 hover:bg-green-50"
-                            title="Download PDF"
+                            onClick={() => router.push(`/bills/${bill._id}/edit`)}
+                            className="h-8 w-8 text-gray-500 hover:text-amber-600 hover:bg-amber-50"
+                            title="Edit"
                           >
-                            <Download className={`w-4 h-4 ${downloadingId === bill._id ? 'animate-pulse' : ''}`} />
+                            <Pencil className="w-4 h-4" />
                           </Button>
                           <Button
                             variant="ghost"

@@ -1,18 +1,19 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { PlusCircle, Trash2, Loader2, FileText, Printer, RotateCcw } from 'lucide-react';
+import { PlusCircle, Trash2, Loader2, Save, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import { numberToWords } from '@/utils/numberToWords';
-import { printBill, printChallan } from '@/lib/print';
 import { Bill } from '@/types';
 
 const UNITS = ['PCS', 'Pcs', 'Box', 'Set', 'Roll', 'Meter', 'Kg', 'Liter', 'Pair', 'Dozen'];
@@ -39,28 +40,61 @@ const billSchema = z.object({
 
 type BillFormData = z.infer<typeof billSchema>;
 
-const defaultItem = {
-  item: '', origin: '', unit: 'Kg', unitQty: 1,
-  unitPrice: 0, totalQty: 1, totalUnit: 'PCS', totalPrice: 0,
-};
-
-export default function CreateBillPage() {
-  const [nextBillNo, setNextBillNo] = useState<number | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [savedBill, setSavedBill] = useState<Bill | null>(null);
-  const today = new Date().toLocaleDateString('en-GB');
+export default function EditBillPage() {
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const [bill, setBill] = useState<Bill | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   const { register, control, handleSubmit, setValue, reset, formState: { errors } } =
-    useForm<BillFormData>({
-      resolver: zodResolver(billSchema),
-      defaultValues: { customerName: '', companyName: '', address: '', phone: '', items: [{ ...defaultItem }], deliveryCharge: 0 },
-    });
+    useForm<BillFormData>({ resolver: zodResolver(billSchema) });
 
   const { fields, append, remove } = useFieldArray({ control, name: 'items' });
   const watchItems = useWatch({ control, name: 'items' });
   const watchDelivery = useWatch({ control, name: 'deliveryCharge' });
 
-  // Total Price = Unit Price × Total QTY
+  // Load bill data
+  useEffect(() => {
+    const fetchBill = async () => {
+      try {
+        const res = await fetch(`/api/bills/${id}`);
+        const data = await res.json();
+        if (data.success) {
+          const b: Bill = data.data;
+          setBill(b);
+          reset({
+            customerName: b.customerName,
+            companyName: b.companyName,
+            address: b.address,
+            phone: b.phone || '',
+            items: b.items.map((item) => ({
+              item: item.item,
+              origin: item.origin,
+              unit: item.unit || 'PCS',
+              unitQty: item.unitQty,
+              unitPrice: item.unitPrice,
+              totalQty: item.totalQty,
+              totalUnit: item.totalUnit || 'PCS',
+              totalPrice: item.totalPrice,
+            })),
+            deliveryCharge: b.deliveryCharge,
+          });
+        } else {
+          toast.error('Bill not found');
+          router.push('/bills');
+        }
+      } catch {
+        toast.error('Failed to load bill');
+        router.push('/bills');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBill();
+  }, [id, router, reset]);
+
+  // Auto-calculate Total Price = Unit Price × Total QTY
   useEffect(() => {
     watchItems?.forEach((item, index) => {
       const tQty = Number(item.totalQty) || 0;
@@ -74,135 +108,45 @@ export default function CreateBillPage() {
   const deliveryCharge = Number(watchDelivery) || 0;
   const grandTotal = subtotal + deliveryCharge;
 
-  const fetchNextBillNo = useCallback(async () => {
-    try {
-      const res = await fetch('/api/next-bill-no');
-      const data = await res.json();
-      if (data.success) setNextBillNo(data.nextBillNo);
-    } catch { setNextBillNo(10001); }
-  }, []);
-
-  useEffect(() => { fetchNextBillNo(); }, [fetchNextBillNo]);
-
   const onSubmit = async (formData: BillFormData) => {
-    setIsSubmitting(true);
+    setIsSaving(true);
     try {
-      const res = await fetch('/api/bills', {
-        method: 'POST',
+      const res = await fetch(`/api/bills/${id}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, date: today }),
+        body: JSON.stringify({ ...formData, date: bill?.date }),
       });
       const result = await res.json();
-      if (!res.ok) { toast.error(result.error || 'Failed to create bill'); return; }
-      toast.success(`Bill #${result.data.billNo} created!`);
-      setSavedBill(result.data as Bill);
+      if (!res.ok) { toast.error(result.error || 'Failed to update bill'); return; }
+      toast.success('Bill updated successfully!');
+      router.push(`/bills/${id}`);
     } catch { toast.error('Something went wrong'); }
-    finally { setIsSubmitting(false); }
+    finally { setIsSaving(false); }
   };
 
-  const handleCreateAnother = () => {
-    setSavedBill(null);
-    reset({ customerName: '', companyName: '', address: '', phone: '', items: [{ ...defaultItem }], deliveryCharge: 0 });
-    setNextBillNo(null);
-    fetchNextBillNo();
-  };
-
-  // ── Success / Print screen ────────────────────────────────────────────────
-  if (savedBill) {
+  if (loading) {
     return (
-      <div className="max-w-xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Bill Generated</h1>
-          <p className="text-sm text-gray-500 mt-1">Choose what to print</p>
-        </div>
-
-        <Card className="shadow-sm border-green-200 bg-green-50">
-          <CardContent className="pt-5 pb-5">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
-                <FileText className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="font-bold text-green-800 text-base">
-                  Bill #{savedBill.billNo} · Ch No {savedBill.chNo}
-                </p>
-                <p className="text-xs text-green-600">{savedBill.companyName} · {savedBill.date}</p>
-              </div>
-            </div>
-            <Separator className="mb-4" />
-            <div className="space-y-1.5 text-sm">
-              {savedBill.items.map((item, i) => (
-                <div key={i} className="flex justify-between">
-                  <span className="text-gray-600 truncate max-w-[60%]">{item.item}</span>
-                  <span className="font-medium text-gray-800">৳ {Number(item.totalPrice).toLocaleString()}</span>
-                </div>
-              ))}
-              {savedBill.deliveryCharge > 0 && (
-                <div className="flex justify-between text-gray-500">
-                  <span>Delivery Charge</span>
-                  <span>৳ {Number(savedBill.deliveryCharge).toLocaleString()}</span>
-                </div>
-              )}
-              <Separator className="my-2" />
-              <div className="flex justify-between font-bold text-base">
-                <span>Total Amount</span>
-                <span className="text-green-700">৳ {Number(savedBill.grandTotal).toLocaleString()}</span>
-              </div>
-              <p className="text-xs text-gray-500 italic mt-1">{savedBill.amountInWords}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="grid grid-cols-2 gap-4">
-          <Button onClick={() => printBill(savedBill)}
-            className="h-16 flex-col gap-1.5 text-sm font-semibold bg-blue-600 hover:bg-blue-700">
-            <Printer className="w-5 h-5" /> Print Bill
-          </Button>
-          <Button onClick={() => printChallan(savedBill)} variant="outline"
-            className="h-16 flex-col gap-1.5 text-sm font-semibold border-2 border-gray-300 hover:border-blue-400 hover:bg-blue-50">
-            <Printer className="w-5 h-5" /> Print Challan
-          </Button>
-        </div>
-
-        <Button variant="ghost" onClick={handleCreateAnother} className="w-full gap-2 text-gray-500">
-          <RotateCcw className="w-4 h-4" /> Create Another Bill
-        </Button>
+      <div className="max-w-5xl mx-auto space-y-4">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-40 w-full" />
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }
 
-  // ── Bill Form ────────────────────────────────────────────────────────────
   return (
     <div className="max-w-6xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Create Bill</h1>
-        <p className="text-sm text-gray-500 mt-1">Generate a new invoice for Newton Scientific Co.</p>
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="sm" onClick={() => router.back()} className="gap-2 -ml-2">
+          <ArrowLeft className="w-4 h-4" /> Back
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Edit Bill #{bill?.billNo}</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Ch No: {bill?.chNo} · {bill?.date}</p>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Bill Meta */}
-        <Card className="shadow-sm">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base font-semibold">Bill Information</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs text-gray-500">Bill No</Label>
-                <Input value={nextBillNo ?? 'Loading...'} readOnly className="bg-gray-50 font-semibold cursor-not-allowed" />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-gray-500">Ch No</Label>
-                <Input value={nextBillNo ? String(nextBillNo - 10000).padStart(4, '0') : '—'} readOnly className="bg-gray-50 cursor-not-allowed" />
-              </div>
-              <div className="space-y-1.5 col-span-2">
-                <Label className="text-xs text-gray-500">Date</Label>
-                <Input value={today} readOnly className="bg-gray-50 cursor-not-allowed" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Customer Info */}
         <Card className="shadow-sm">
           <CardHeader className="pb-4">
@@ -212,13 +156,13 @@ export default function CreateBillPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label htmlFor="customerName">Customer Name <span className="text-red-500">*</span></Label>
-                <Input id="customerName" placeholder="e.g. Mr. John Doe" {...register('customerName')}
+                <Input id="customerName" {...register('customerName')}
                   className={errors.customerName ? 'border-red-400' : ''} />
                 {errors.customerName && <p className="text-xs text-red-500">{errors.customerName.message}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="companyName">Company Name <span className="text-red-500">*</span></Label>
-                <Input id="companyName" placeholder="e.g. IFL Factory LTD" {...register('companyName')}
+                <Input id="companyName" {...register('companyName')}
                   className={errors.companyName ? 'border-red-400' : ''} />
                 {errors.companyName && <p className="text-xs text-red-500">{errors.companyName.message}</p>}
               </div>
@@ -226,13 +170,13 @@ export default function CreateBillPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label htmlFor="address">Address <span className="text-red-500">*</span></Label>
-                <Input id="address" placeholder="e.g. 121, Tak Kathora, Gazipur" {...register('address')}
+                <Input id="address" {...register('address')}
                   className={errors.address ? 'border-red-400' : ''} />
                 {errors.address && <p className="text-xs text-red-500">{errors.address.message}</p>}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="phone">Phone</Label>
-                <Input id="phone" placeholder="+88 01XXXXXXXXX" {...register('phone')} />
+                <Input id="phone" {...register('phone')} />
               </div>
             </div>
           </CardContent>
@@ -242,7 +186,8 @@ export default function CreateBillPage() {
         <Card className="shadow-sm">
           <CardHeader className="pb-4 flex flex-row items-center justify-between">
             <CardTitle className="text-base font-semibold">Invoice Items</CardTitle>
-            <Button type="button" variant="outline" size="sm" onClick={() => append({ ...defaultItem })}
+            <Button type="button" variant="outline" size="sm"
+              onClick={() => append({ item: '', origin: '', unit: 'Kg', unitQty: 1, unitPrice: 0, totalQty: 1, totalUnit: 'PCS', totalPrice: 0 })}
               className="gap-1.5 text-blue-600 border-blue-300 hover:bg-blue-50">
               <PlusCircle className="w-4 h-4" /> Add Row
             </Button>
@@ -268,43 +213,37 @@ export default function CreateBillPage() {
                   {fields.map((field, index) => {
                     const tQty = Number(watchItems?.[index]?.totalQty) || 0;
                     const price = Number(watchItems?.[index]?.unitPrice) || 0;
-
                     return (
                       <tr key={field.id} className="hover:bg-gray-50/50">
                         <td className="px-2 py-2 text-gray-400 text-xs">{String(index + 1).padStart(2, '0')}</td>
                         <td className="px-1.5 py-2">
-                          <Input placeholder="Item description" {...register(`items.${index}.item`)}
+                          <Input {...register(`items.${index}.item`)}
                             className={`h-8 text-sm ${errors.items?.[index]?.item ? 'border-red-400' : ''}`} />
                         </td>
                         <td className="px-1.5 py-2">
-                          <Input placeholder="e.g. China" {...register(`items.${index}.origin`)}
+                          <Input {...register(`items.${index}.origin`)}
                             className={`h-8 text-sm ${errors.items?.[index]?.origin ? 'border-red-400' : ''}`} />
                         </td>
-                        {/* Unit */}
                         <td className="px-1.5 py-2">
                           <select
-                            value={watchItems?.[index]?.unit ?? 'Kg'}
+                            value={watchItems?.[index]?.unit ?? 'PCS'}
                             onChange={(e) => setValue(`items.${index}.unit`, e.target.value, { shouldDirty: true })}
                             className="h-8 w-full rounded-md border border-input bg-background px-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
                             {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
                           </select>
                         </td>
-                        {/* Unit QTY */}
                         <td className="px-1.5 py-2">
                           <Input type="number" min="0" step="any" {...register(`items.${index}.unitQty`)}
                             className="h-8 text-sm text-right" />
                         </td>
-                        {/* Unit Price */}
                         <td className="px-1.5 py-2">
                           <Input type="number" min="0" step="0.01" {...register(`items.${index}.unitPrice`)}
                             className="h-8 text-sm text-right" />
                         </td>
-                        {/* Total QTY */}
                         <td className="px-1.5 py-2">
                           <Input type="number" min="0" step="any" {...register(`items.${index}.totalQty`)}
                             className="h-8 text-sm text-right" />
                         </td>
-                        {/* Total Unit */}
                         <td className="px-1.5 py-2">
                           <select
                             value={watchItems?.[index]?.totalUnit ?? 'PCS'}
@@ -313,7 +252,6 @@ export default function CreateBillPage() {
                             {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
                           </select>
                         </td>
-                        {/* Total Price (auto) */}
                         <td className="px-2 py-2 text-right text-sm font-medium text-gray-800 tabular-nums">
                           {(tQty * price).toFixed(2)}
                         </td>
@@ -331,9 +269,6 @@ export default function CreateBillPage() {
                 </tbody>
               </table>
             </div>
-            {errors.items && !Array.isArray(errors.items) && (
-              <p className="text-xs text-red-500 px-4 py-2">{errors.items.message}</p>
-            )}
           </CardContent>
         </Card>
 
@@ -346,7 +281,7 @@ export default function CreateBillPage() {
             <CardContent>
               <div className="space-y-1.5">
                 <Label htmlFor="deliveryCharge">Amount (৳)</Label>
-                <Input id="deliveryCharge" type="number" min="0" step="0.01" placeholder="0.00"
+                <Input id="deliveryCharge" type="number" min="0" step="0.01"
                   {...register('deliveryCharge')} className="text-right font-medium" />
               </div>
             </CardContent>
@@ -370,7 +305,7 @@ export default function CreateBillPage() {
                 <span>Grand Total</span>
                 <span className="text-blue-600">৳ {grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
               </div>
-              <div className="mt-2 p-3 bg-white rounded-lg border text-xs text-gray-600 leading-relaxed">
+              <div className="p-3 bg-white rounded-lg border text-xs text-gray-600 leading-relaxed">
                 <span className="font-semibold text-gray-700">In Word: </span>
                 {numberToWords(grandTotal)}
               </div>
@@ -378,11 +313,12 @@ export default function CreateBillPage() {
           </Card>
         </div>
 
-        <div className="flex justify-end pb-4">
-          <Button type="submit" disabled={isSubmitting || !nextBillNo} className="gap-2 px-8 h-11">
-            {isSubmitting
-              ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</>
-              : <><FileText className="w-4 h-4" /> Generate Bill</>}
+        <div className="flex justify-end gap-3 pb-4">
+          <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
+          <Button type="submit" disabled={isSaving} className="gap-2 px-8 h-11">
+            {isSaving
+              ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
+              : <><Save className="w-4 h-4" /> Save Changes</>}
           </Button>
         </div>
       </form>

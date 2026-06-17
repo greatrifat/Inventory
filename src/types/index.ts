@@ -5,6 +5,7 @@ export interface InvoiceItem {
   unitQty: number;
   unitPrice: number;
   totalQty: number;
+  totalUnit: string;
   totalPrice: number;
 }
 
@@ -33,6 +34,7 @@ export interface BillListItem {
   companyName: string;
   totalItems: number;
   grandTotal: number;
+  date: string;
   createdAt: string;
 }
 

@@ -9,7 +9,6 @@ import {
   FileText,
   Settings,
   LogOut,
-  FlaskConical,
   Menu,
   X,
 } from 'lucide-react';
@@ -43,16 +42,9 @@ export default function Sidebar() {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-6 py-5 border-b border-sidebar-border">
-        <div className="flex items-center justify-center w-9 h-9 bg-blue-500 rounded-lg shrink-0">
-          <FlaskConical className="w-5 h-5 text-white" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm font-bold text-sidebar-foreground leading-tight truncate">
-            Newton Scientific
-          </p>
-          <p className="text-xs text-blue-300 truncate">Billing System</p>
-        </div>
+      <div className="flex flex-col items-center px-4 py-4 border-b border-sidebar-border gap-1">
+        <img src="/logo.png" alt="Newton Scientific Co." className="h-10 w-auto object-contain" />
+        <p className="text-xs text-blue-300">Billing System</p>
       </div>
 
       {/* Navigation */}

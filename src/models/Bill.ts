@@ -7,6 +7,7 @@ export interface IBillItem {
   unitQty: number;
   unitPrice: number;
   totalQty: number;
+  totalUnit: string;
   totalPrice: number;
 }
 
@@ -34,6 +35,7 @@ const BillItemSchema = new Schema<IBillItem>({
   unitQty: { type: Number, required: true },
   unitPrice: { type: Number, required: true },
   totalQty: { type: Number, required: true },
+  totalUnit: { type: String, default: 'PCS' },
   totalPrice: { type: Number, required: true },
 });
 
