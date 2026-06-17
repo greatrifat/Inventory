@@ -15,18 +15,24 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { numberToWords } from '@/utils/numberToWords';
 import { Bill } from '@/types';
+import { computeUnitLabels } from '@/utils/unitLabels';
 
-const UNITS = ['PCS', 'Pcs', 'Box', 'Set', 'Roll', 'Meter', 'Kg', 'Liter', 'Pair', 'Dozen'];
+const SIMPLE_UNITS = ['PCS', 'Pair', 'Box', 'Set', 'Roll', 'Meter', 'Kg', 'L', 'Gram', 'Dozen', 'Feet', 'Yard'];
+const SIZE_UNITS = ['ml', 'g', 'L', 'Kg', 'mg', 'oz'];
+const CONTAINERS = ['Bottle', 'Jar', 'Pack', 'Can', 'Bag', 'Carton', 'Drum'];
 
 const itemSchema = z.object({
   item: z.string().min(1, 'Required'),
   origin: z.string().min(1, 'Required'),
-  unit: z.string().min(1, 'Required'),
-  unitQty: z.coerce.number().min(0, 'Required'),
-  unitPrice: z.coerce.number().min(0, 'Required'),
-  totalQty: z.coerce.number().min(0, 'Required'),
-  totalUnit: z.string().min(1, 'Required'),
-  totalPrice: z.coerce.number(),
+  unitType: z.enum(['simple', 'compound']).default('simple'),
+  unitSize: z.coerce.number().min(0).default(1),
+  unit: z.string().default('PCS'),
+  compoundSize: z.coerce.number().min(0).default(1),
+  sizeUnit: z.string().default('ml'),
+  container: z.string().default('Bottle'),
+  quantity: z.coerce.number().min(0).default(1),
+  unitPrice: z.coerce.number().min(0).default(0),
+  totalPrice: z.coerce.number().default(0),
 });
 
 const billSchema = z.object({
@@ -39,6 +45,17 @@ const billSchema = z.object({
 });
 
 type BillFormData = z.infer<typeof billSchema>;
+type ItemFormData = z.infer<typeof itemSchema>;
+
+const defaultItem: ItemFormData = {
+  item: '', origin: '',
+  unitType: 'simple', unitSize: 1, unit: 'PCS',
+  compoundSize: 1, sizeUnit: 'ml', container: 'Bottle',
+  quantity: 1, unitPrice: 0, totalPrice: 0,
+};
+
+const SELECT_CLS =
+  'h-7 rounded-md border border-input bg-background px-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring';
 
 export default function EditBillPage() {
   const { id } = useParams<{ id: string }>();
@@ -54,7 +71,6 @@ export default function EditBillPage() {
   const watchItems = useWatch({ control, name: 'items' });
   const watchDelivery = useWatch({ control, name: 'deliveryCharge' });
 
-  // Load bill data
   useEffect(() => {
     const fetchBill = async () => {
       try {
@@ -68,14 +84,18 @@ export default function EditBillPage() {
             companyName: b.companyName,
             address: b.address,
             phone: b.phone || '',
-            items: b.items.map((item) => ({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            items: b.items.map((item: any) => ({
               item: item.item,
               origin: item.origin,
+              unitType: item.unitType || 'simple',
+              unitSize: item.unitSize ?? item.unitQty ?? 1,
               unit: item.unit || 'PCS',
-              unitQty: item.unitQty,
+              compoundSize: item.compoundSize ?? 1,
+              sizeUnit: item.sizeUnit || 'ml',
+              container: item.container || 'Bottle',
+              quantity: item.quantity ?? item.totalQty ?? 1,
               unitPrice: item.unitPrice,
-              totalQty: item.totalQty,
-              totalUnit: item.totalUnit || 'PCS',
               totalPrice: item.totalPrice,
             })),
             deliveryCharge: b.deliveryCharge,
@@ -94,27 +114,54 @@ export default function EditBillPage() {
     fetchBill();
   }, [id, router, reset]);
 
-  // Auto-calculate Total Price = Unit Price × Total QTY
   useEffect(() => {
     watchItems?.forEach((item, index) => {
-      const tQty = Number(item.totalQty) || 0;
+      const qty = Number(item.quantity) || 0;
       const price = Number(item.unitPrice) || 0;
-      setValue(`items.${index}.totalPrice`, tQty * price);
+      setValue(`items.${index}.totalPrice`, qty * price);
     });
   }, [watchItems, setValue]);
 
-  const subtotal = watchItems?.reduce((sum, item) =>
-    sum + (Number(item.totalQty) || 0) * (Number(item.unitPrice) || 0), 0) ?? 0;
+  const subtotal = watchItems?.reduce(
+    (sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0), 0
+  ) ?? 0;
   const deliveryCharge = Number(watchDelivery) || 0;
   const grandTotal = subtotal + deliveryCharge;
 
   const onSubmit = async (formData: BillFormData) => {
     setIsSaving(true);
     try {
+      const items = formData.items.map((item) => {
+        const labels = computeUnitLabels(item);
+        return {
+          item: item.item,
+          origin: item.origin,
+          unitQtyLabel: labels.unitQtyLabel,
+          totalQtyLabel: labels.totalQtyLabel,
+          unitType: item.unitType,
+          unitSize: Number(item.unitSize),
+          unit: item.unit,
+          compoundSize: Number(item.compoundSize),
+          sizeUnit: item.sizeUnit,
+          container: item.container,
+          quantity: Number(item.quantity),
+          unitPrice: Number(item.unitPrice),
+          totalPrice: Number(item.quantity) * Number(item.unitPrice),
+        };
+      });
+
       const res = await fetch(`/api/bills/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, date: bill?.date }),
+        body: JSON.stringify({
+          customerName: formData.customerName,
+          companyName: formData.companyName,
+          address: formData.address,
+          phone: formData.phone,
+          deliveryCharge: formData.deliveryCharge,
+          items,
+          date: bill?.date,
+        }),
       });
       const result = await res.json();
       if (!res.ok) { toast.error(result.error || 'Failed to update bill'); return; }
@@ -135,7 +182,7 @@ export default function EditBillPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => router.back()} className="gap-2 -ml-2">
           <ArrowLeft className="w-4 h-4" /> Back
@@ -187,7 +234,7 @@ export default function EditBillPage() {
           <CardHeader className="pb-4 flex flex-row items-center justify-between">
             <CardTitle className="text-base font-semibold">Invoice Items</CardTitle>
             <Button type="button" variant="outline" size="sm"
-              onClick={() => append({ item: '', origin: '', unit: 'Kg', unitQty: 1, unitPrice: 0, totalQty: 1, totalUnit: 'PCS', totalPrice: 0 })}
+              onClick={() => append({ ...defaultItem })}
               className="gap-1.5 text-blue-600 border-blue-300 hover:bg-blue-50">
               <PlusCircle className="w-4 h-4" /> Add Row
             </Button>
@@ -200,61 +247,138 @@ export default function EditBillPage() {
                     <th className="px-2 py-2.5 text-left font-semibold text-gray-600 w-7">SL</th>
                     <th className="px-2 py-2.5 text-left font-semibold text-gray-600 min-w-[150px]">Item</th>
                     <th className="px-2 py-2.5 text-left font-semibold text-gray-600 min-w-[80px]">Origin</th>
-                    <th className="px-2 py-2.5 text-center font-semibold text-gray-600 w-[72px]">Unit</th>
-                    <th className="px-2 py-2.5 text-right font-semibold text-gray-600 w-20">Unit QTY</th>
+                    <th className="px-2 py-2.5 text-center font-semibold text-gray-600 min-w-[200px]">Unit Setup</th>
+                    <th className="px-2 py-2.5 text-right font-semibold text-gray-600 w-16">Qty</th>
                     <th className="px-2 py-2.5 text-right font-semibold text-gray-600 w-24">Unit Price</th>
-                    <th className="px-2 py-2.5 text-right font-semibold text-gray-600 w-20">Total QTY</th>
-                    <th className="px-2 py-2.5 text-center font-semibold text-gray-600 w-[72px]">Total Unit</th>
+                    <th className="px-2 py-2.5 text-center font-semibold text-gray-600 w-28">Unit QTY</th>
+                    <th className="px-2 py-2.5 text-center font-semibold text-gray-600 w-32">Total QTY</th>
                     <th className="px-2 py-2.5 text-right font-semibold text-gray-600 w-24">Total Price</th>
                     <th className="px-2 py-2.5 w-9"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   {fields.map((field, index) => {
-                    const tQty = Number(watchItems?.[index]?.totalQty) || 0;
-                    const price = Number(watchItems?.[index]?.unitPrice) || 0;
+                    const item = watchItems?.[index];
+                    const unitType = item?.unitType ?? 'simple';
+                    const labels = computeUnitLabels(item ?? defaultItem);
+                    const totalPrice = (Number(item?.quantity) || 0) * (Number(item?.unitPrice) || 0);
+
                     return (
                       <tr key={field.id} className="hover:bg-gray-50/50">
                         <td className="px-2 py-2 text-gray-400 text-xs">{String(index + 1).padStart(2, '0')}</td>
+
                         <td className="px-1.5 py-2">
                           <Input {...register(`items.${index}.item`)}
                             className={`h-8 text-sm ${errors.items?.[index]?.item ? 'border-red-400' : ''}`} />
                         </td>
+
                         <td className="px-1.5 py-2">
                           <Input {...register(`items.${index}.origin`)}
                             className={`h-8 text-sm ${errors.items?.[index]?.origin ? 'border-red-400' : ''}`} />
                         </td>
+
+                        {/* Unit Setup */}
                         <td className="px-1.5 py-2">
-                          <select
-                            value={watchItems?.[index]?.unit ?? 'PCS'}
-                            onChange={(e) => setValue(`items.${index}.unit`, e.target.value, { shouldDirty: true })}
-                            className="h-8 w-full rounded-md border border-input bg-background px-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-                            {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
-                          </select>
+                          <div className="space-y-1.5">
+                            <div className="flex rounded border border-gray-300 overflow-hidden w-fit">
+                              <button
+                                type="button"
+                                onClick={() => setValue(`items.${index}.unitType`, 'simple', { shouldDirty: true })}
+                                className={`text-[10px] font-medium px-2.5 py-0.5 transition-colors ${
+                                  unitType !== 'compound'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'text-gray-500 hover:bg-gray-50'
+                                }`}
+                              >
+                                Simple
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setValue(`items.${index}.unitType`, 'compound', { shouldDirty: true })}
+                                className={`text-[10px] font-medium px-2.5 py-0.5 border-l border-gray-300 transition-colors ${
+                                  unitType === 'compound'
+                                    ? 'bg-blue-600 text-white'
+                                    : 'text-gray-500 hover:bg-gray-50'
+                                }`}
+                              >
+                                Compound
+                              </button>
+                            </div>
+
+                            {unitType !== 'compound' ? (
+                              <div className="flex gap-1">
+                                <Input
+                                  type="number" min="0" step="any"
+                                  {...register(`items.${index}.unitSize`)}
+                                  className="h-7 w-14 text-sm text-right px-1"
+                                />
+                                <select
+                                  value={item?.unit ?? 'PCS'}
+                                  onChange={(e) => setValue(`items.${index}.unit`, e.target.value, { shouldDirty: true })}
+                                  className={`${SELECT_CLS} flex-1 min-w-[60px]`}
+                                >
+                                  {SIMPLE_UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+                                </select>
+                              </div>
+                            ) : (
+                              <div className="flex gap-1">
+                                <Input
+                                  type="number" min="0" step="any"
+                                  {...register(`items.${index}.compoundSize`)}
+                                  className="h-7 w-14 text-sm text-right px-1"
+                                />
+                                <select
+                                  value={item?.sizeUnit ?? 'ml'}
+                                  onChange={(e) => setValue(`items.${index}.sizeUnit`, e.target.value, { shouldDirty: true })}
+                                  className={`${SELECT_CLS} w-12`}
+                                >
+                                  {SIZE_UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+                                </select>
+                                <select
+                                  value={item?.container ?? 'Bottle'}
+                                  onChange={(e) => setValue(`items.${index}.container`, e.target.value, { shouldDirty: true })}
+                                  className={`${SELECT_CLS} flex-1 min-w-[55px]`}
+                                >
+                                  {CONTAINERS.map((u) => <option key={u} value={u}>{u}</option>)}
+                                </select>
+                              </div>
+                            )}
+                          </div>
                         </td>
+
+                        {/* Qty */}
                         <td className="px-1.5 py-2">
-                          <Input type="number" min="0" step="any" {...register(`items.${index}.unitQty`)}
+                          <Input type="number" min="0" step="any"
+                            {...register(`items.${index}.quantity`)}
                             className="h-8 text-sm text-right" />
                         </td>
+
+                        {/* Unit Price */}
                         <td className="px-1.5 py-2">
-                          <Input type="number" min="0" step="0.01" {...register(`items.${index}.unitPrice`)}
+                          <Input type="number" min="0" step="0.01"
+                            {...register(`items.${index}.unitPrice`)}
                             className="h-8 text-sm text-right" />
                         </td>
-                        <td className="px-1.5 py-2">
-                          <Input type="number" min="0" step="any" {...register(`items.${index}.totalQty`)}
-                            className="h-8 text-sm text-right" />
+
+                        {/* Unit QTY (auto) */}
+                        <td className="px-2 py-2 text-center">
+                          <span className="text-xs bg-gray-100 text-gray-700 font-medium rounded px-1.5 py-0.5 whitespace-nowrap">
+                            {labels.unitQtyLabel || '—'}
+                          </span>
                         </td>
-                        <td className="px-1.5 py-2">
-                          <select
-                            value={watchItems?.[index]?.totalUnit ?? 'PCS'}
-                            onChange={(e) => setValue(`items.${index}.totalUnit`, e.target.value, { shouldDirty: true })}
-                            className="h-8 w-full rounded-md border border-input bg-background px-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-                            {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
-                          </select>
+
+                        {/* Total QTY (auto) */}
+                        <td className="px-2 py-2 text-center">
+                          <span className="text-xs bg-blue-50 text-blue-700 font-medium rounded px-1.5 py-0.5 whitespace-nowrap">
+                            {labels.totalQtyLabel || '—'}
+                          </span>
                         </td>
+
+                        {/* Total Price (auto) */}
                         <td className="px-2 py-2 text-right text-sm font-medium text-gray-800 tabular-nums">
-                          {(tQty * price).toFixed(2)}
+                          {totalPrice.toFixed(2)}
                         </td>
+
                         <td className="px-1.5 py-2">
                           <Button type="button" variant="ghost" size="icon"
                             onClick={() => fields.length > 1 && remove(index)}

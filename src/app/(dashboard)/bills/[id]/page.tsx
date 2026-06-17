@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { printBill, printChallan } from '@/lib/print';
 import { Bill } from '@/types';
+import { legacyUnitQtyDisplay, legacyTotalQtyDisplay } from '@/utils/unitLabels';
 import { Separator } from '@/components/ui/separator';
 
 export default function ViewBillPage() {
@@ -146,9 +147,9 @@ export default function ViewBillPage() {
                     </td>
                     <td className="border-r border-gray-300 px-2 py-1.5">{item.item}</td>
                     <td className="border-r border-gray-300 px-2 py-1.5 text-center">{item.origin}</td>
-                    <td className="border-r border-gray-300 px-2 py-1.5 text-center">{item.unitQty} {item.unit}</td>
+                    <td className="border-r border-gray-300 px-2 py-1.5 text-center">{legacyUnitQtyDisplay(item)}</td>
                     <td className="border-r border-gray-300 px-2 py-1.5 text-right">{Number(item.unitPrice).toFixed(2)}</td>
-                    <td className="border-r border-gray-300 px-2 py-1.5 text-center">{item.totalQty} {item.totalUnit || 'PCS'}</td>
+                    <td className="border-r border-gray-300 px-2 py-1.5 text-center">{legacyTotalQtyDisplay(item)}</td>
                     <td className="px-2 py-1.5 text-right">{Number(item.totalPrice).toFixed(2)}</td>
                   </tr>
                 ))}
@@ -246,7 +247,7 @@ export default function ViewBillPage() {
                     </td>
                     <td className="border-r border-gray-300 px-2 py-1.5">{item.item}</td>
                     <td className="border-r border-gray-300 px-2 py-1.5 text-center">{item.origin}</td>
-                    <td className="px-2 py-1.5 text-center">{item.totalQty} {item.totalUnit || 'PCS'}</td>
+                    <td className="px-2 py-1.5 text-center">{legacyTotalQtyDisplay(item)}</td>
                   </tr>
                 ))}
               </tbody>

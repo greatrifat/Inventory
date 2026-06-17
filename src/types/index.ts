@@ -1,12 +1,23 @@
 export interface InvoiceItem {
   item: string;
   origin: string;
-  unit: string;
-  unitQty: number;
+  // Display strings (printed on bill)
+  unitQtyLabel: string;
+  totalQtyLabel: string;
   unitPrice: number;
-  totalQty: number;
-  totalUnit: string;
+  quantity: number;
   totalPrice: number;
+  // Form reconstruction fields (for edit page)
+  unitType?: string;
+  unitSize?: number;
+  unit?: string;
+  compoundSize?: number;
+  sizeUnit?: string;
+  container?: string;
+  // Legacy fields (backward compat with old bills)
+  unitQty?: number;
+  totalQty?: number;
+  totalUnit?: string;
 }
 
 export interface Bill {

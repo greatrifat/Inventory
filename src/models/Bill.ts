@@ -3,12 +3,17 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 export interface IBillItem {
   item: string;
   origin: string;
-  unit: string;
-  unitQty: number;
+  unitQtyLabel: string;
+  totalQtyLabel: string;
   unitPrice: number;
-  totalQty: number;
-  totalUnit: string;
+  quantity: number;
   totalPrice: number;
+  unitType: string;
+  unitSize: number;
+  unit: string;
+  compoundSize: number;
+  sizeUnit: string;
+  container: string;
 }
 
 export interface IBill extends Document {
@@ -31,12 +36,17 @@ export interface IBill extends Document {
 const BillItemSchema = new Schema<IBillItem>({
   item: { type: String, required: true },
   origin: { type: String, required: true },
-  unit: { type: String, default: 'PCS' },
-  unitQty: { type: Number, required: true },
+  unitQtyLabel: { type: String, default: '' },
+  totalQtyLabel: { type: String, default: '' },
   unitPrice: { type: Number, required: true },
-  totalQty: { type: Number, required: true },
-  totalUnit: { type: String, default: 'PCS' },
+  quantity: { type: Number, default: 0 },
   totalPrice: { type: Number, required: true },
+  unitType: { type: String, default: 'simple' },
+  unitSize: { type: Number, default: 1 },
+  unit: { type: String, default: 'PCS' },
+  compoundSize: { type: Number, default: 1 },
+  sizeUnit: { type: String, default: 'ml' },
+  container: { type: String, default: 'Bottle' },
 });
 
 const BillSchema = new Schema<IBill>(
@@ -60,7 +70,11 @@ const BillSchema = new Schema<IBill>(
 BillSchema.index({ billNo: -1 });
 BillSchema.index({ customerName: 'text', companyName: 'text' });
 
-const Bill: Model<IBill> =
-  mongoose.models.Bill || mongoose.model<IBill>('Bill', BillSchema);
+// In development, delete the cached model so schema changes take effect on hot reload
+if (process.env.NODE_ENV !== 'production') {
+  delete (mongoose.models as Record<string, unknown>).Bill;
+}
+
+const Bill: Model<IBill> = mongoose.model<IBill>('Bill', BillSchema);
 
 export default Bill;

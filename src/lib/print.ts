@@ -1,4 +1,5 @@
 import { Bill } from '@/types';
+import { legacyUnitQtyDisplay, legacyTotalQtyDisplay } from '@/utils/unitLabels';
 
 function companyHeader(): string {
   const logoUrl = `${window.location.origin}/logo.png`;
@@ -57,9 +58,9 @@ export function printBill(bill: Bill): void {
       <td style="text-align:center;">${String(i + 1).padStart(2, '0')}</td>
       <td>${item.item}</td>
       <td style="text-align:center;">${item.origin}</td>
-      <td style="text-align:center;">${item.unitQty} ${item.unit || 'PCS'}</td>
+      <td style="text-align:center;">${legacyUnitQtyDisplay(item)}</td>
       <td style="text-align:right;">${Number(item.unitPrice).toFixed(2)}</td>
-      <td style="text-align:center;">${item.totalQty} ${item.totalUnit || 'PCS'}</td>
+      <td style="text-align:center;">${legacyTotalQtyDisplay(item)}</td>
       <td style="text-align:right;">${Number(item.totalPrice).toFixed(2)}</td>
     </tr>`
     )
@@ -132,7 +133,7 @@ export function printChallan(bill: Bill): void {
       <td style="text-align:center;">${String(i + 1).padStart(2, '0')}</td>
       <td>${item.item}</td>
       <td style="text-align:center;">${item.origin}</td>
-      <td style="text-align:center;">${item.totalQty} ${item.totalUnit || 'PCS'}</td>
+      <td style="text-align:center;">${legacyTotalQtyDisplay(item)}</td>
     </tr>`
     )
     .join('');

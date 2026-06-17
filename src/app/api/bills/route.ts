@@ -4,24 +4,61 @@ import Bill from '@/models/Bill';
 import { getNextSequence } from '@/models/Counter';
 import { numberToWords } from '@/utils/numberToWords';
 import { getSession } from '@/lib/auth';
+import { computeUnitLabels } from '@/utils/unitLabels';
 
 type RawItem = {
   item: string;
   origin: string;
-  unit: string;
-  unitQty: number;
+  unitQtyLabel?: string;
+  totalQtyLabel?: string;
   unitPrice: number;
-  totalQty: number;
-  totalUnit: string;
+  quantity?: number;
+  unitType?: string;
+  unitSize?: number;
+  unit?: string;
+  compoundSize?: number;
+  sizeUnit?: string;
+  container?: string;
+  // Legacy
+  unitQty?: number;
+  totalQty?: number;
+  totalUnit?: string;
 };
 
 function processItems(items: RawItem[]) {
-  return items.map((item) => ({
-    ...item,
-    totalQty: Number(item.totalQty) || 0,
-    totalUnit: item.totalUnit || item.unit || 'PCS',
-    totalPrice: (Number(item.totalQty) || 0) * (Number(item.unitPrice) || 0),
-  }));
+  return items.map((item) => {
+    const qty = Number(item.quantity ?? item.totalQty) || 0;
+    const price = Number(item.unitPrice) || 0;
+
+    const labels =
+      item.unitQtyLabel
+        ? { unitQtyLabel: item.unitQtyLabel, totalQtyLabel: item.totalQtyLabel || '' }
+        : computeUnitLabels({
+            unitType: item.unitType || 'simple',
+            unitSize: item.unitSize ?? item.unitQty ?? 1,
+            unit: item.unit || 'PCS',
+            compoundSize: item.compoundSize ?? 1,
+            sizeUnit: item.sizeUnit || 'ml',
+            container: item.container || 'Bottle',
+            quantity: qty,
+          });
+
+    return {
+      item: item.item,
+      origin: item.origin,
+      unitQtyLabel: labels.unitQtyLabel,
+      totalQtyLabel: labels.totalQtyLabel,
+      unitPrice: price,
+      quantity: qty,
+      totalPrice: qty * price,
+      unitType: item.unitType || 'simple',
+      unitSize: Number(item.unitSize ?? item.unitQty) || 1,
+      unit: item.unit || 'PCS',
+      compoundSize: Number(item.compoundSize) || 1,
+      sizeUnit: item.sizeUnit || 'ml',
+      container: item.container || 'Bottle',
+    };
+  });
 }
 
 export async function POST(request: NextRequest) {

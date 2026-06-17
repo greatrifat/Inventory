@@ -1,4 +1,5 @@
 import { Bill } from '@/types';
+import { legacyUnitQtyDisplay, legacyTotalQtyDisplay } from '@/utils/unitLabels';
 
 export async function generateInvoicePDF(bill: Bill): Promise<void> {
   const { default: jsPDF } = await import('jspdf');
@@ -104,9 +105,9 @@ export async function generateInvoicePDF(bill: Bill): Promise<void> {
     String(i + 1).padStart(2, '0'),
     item.item,
     item.origin,
-    `${item.unitQty} ${item.unit || 'PCS'}`,
+    legacyUnitQtyDisplay(item),
     Number(item.unitPrice).toFixed(2),
-    `${item.totalQty} ${item.unit || 'PCS'}`,
+    legacyTotalQtyDisplay(item),
     Number(item.totalPrice).toFixed(2),
   ]);
 
