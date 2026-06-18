@@ -52,9 +52,8 @@ export async function generateInvoicePDF(bill: Bill): Promise<void> {
   doc.setFontSize(8.5);
   doc.setTextColor(30, 30, 30);
   const descCx = margin + leftColW / 2;
-  doc.text('We Supply a Wide Range of Scientific & Textile', descCx, headerTop + 37, { align: 'center' });
-  doc.text('Laboratory Instruments, Apparatus, Chemicals,', descCx, headerTop + 41.5, { align: 'center' });
-  doc.text('Glassware and Laboratory Accessories.', descCx, headerTop + 46, { align: 'center' });
+  doc.text('We Supply a Wide Range of Scientific & Textile Laboratory Instruments,', descCx, headerTop + 38, { align: 'center' });
+  doc.text('Apparatus, Chemicals, Glassware and Laboratory Accessories.', descCx, headerTop + 43, { align: 'center' });
 
   // Diagonal separator (two thin lines)
   doc.setDrawColor(150, 150, 150);
@@ -198,7 +197,7 @@ export async function generateInvoicePDF(bill: Bill): Promise<void> {
   doc.setFontSize(10);
   const inWordText = `In Word: ${bill.amountInWords}. = ${Number(bill.grandTotal).toLocaleString()}/-`;
   doc.text(inWordText, margin, y);
-  y += 18;
+  y += 30;
 
   // ── Authorized Signature ─────────────────────────────────────────────────────
   const sigX = pageWidth - margin - 48;

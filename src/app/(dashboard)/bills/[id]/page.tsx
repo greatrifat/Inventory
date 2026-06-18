@@ -82,12 +82,11 @@ export default function ViewBillPage() {
         <div className="p-8">
           {/* Company Header */}
           <div className="flex items-stretch border-t border-b border-gray-400 mb-3" style={{minHeight: '140px'}}>
-            <div className="flex flex-col items-center justify-center pl-0 pr-3 py-3" style={{width: '46%'}}>
+            <div className="flex flex-col items-center justify-center pl-0 pr-3 py-3" style={{width: '52%'}}>
               <img src="/logo.png" alt="Newton Scientific Co." className="h-24 w-auto object-contain" />
-              <p className="text-[11px] text-gray-800 text-center mt-2 leading-snug">
-                We Supply a Wide Range of Scientific &amp; Textile<br/>
-                Laboratory Instruments, Apparatus, Chemicals,<br/>
-                Glassware and Laboratory Accessories.
+              <p className="text-[8px] text-gray-800 text-center mt-2 leading-snug">
+                We Supply a Wide Range of Scientific &amp; Textile Laboratory Instruments,<br/>
+                Apparatus, Chemicals, Glassware and Laboratory Accessories.
               </p>
             </div>
             <div className="relative flex-none" style={{width: '28px'}}>
@@ -179,7 +178,7 @@ export default function ViewBillPage() {
           </div>
 
           {/* Authorized Signature */}
-          <div className="mt-12 flex justify-end">
+          <div className="mt-20 flex justify-end">
             <div className="text-center">
               <Separator className="mb-1 w-36" />
               <p className="text-xs text-gray-600">Authorized Signature</p>
@@ -193,12 +192,11 @@ export default function ViewBillPage() {
         <div className="p-8">
           {/* Company Header */}
           <div className="flex items-stretch border-t border-b border-gray-400 mb-3" style={{minHeight: '140px'}}>
-            <div className="flex flex-col items-center justify-center pl-0 pr-3 py-3" style={{width: '46%'}}>
+            <div className="flex flex-col items-center justify-center pl-0 pr-3 py-3" style={{width: '52%'}}>
               <img src="/logo.png" alt="Newton Scientific Co." className="h-24 w-auto object-contain" />
-              <p className="text-[11px] text-gray-800 text-center mt-2 leading-snug">
-                We Supply a Wide Range of Scientific &amp; Textile<br/>
-                Laboratory Instruments, Apparatus, Chemicals,<br/>
-                Glassware and Laboratory Accessories.
+              <p className="text-[8px] text-gray-800 text-center mt-2 leading-snug">
+                We Supply a Wide Range of Scientific &amp; Textile Laboratory Instruments,<br/>
+                Apparatus, Chemicals, Glassware and Laboratory Accessories.
               </p>
             </div>
             <div className="relative flex-none" style={{width: '28px'}}>

@@ -8,9 +8,8 @@ function companyHeader(): string {
       <div style="flex:0 0 46%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 10px 10px 2px;">
         <img src="${logoUrl}" style="height:100px;width:auto;" alt="Newton Scientific Co." />
         <p style="margin:6px 0 0;font-size:10px;text-align:center;color:#222;line-height:1.5;font-weight:500;">
-          We Supply a Wide Range of Scientific &amp; Textile<br>
-          Laboratory Instruments, Apparatus, Chemicals,<br>
-          Glassware and Laboratory Accessories.
+          We Supply a Wide Range of Scientific &amp; Textile Laboratory Instruments,<br>
+          Apparatus, Chemicals, Glassware and Laboratory Accessories.
         </p>
       </div>
       <div style="position:relative;flex:0 0 28px;overflow:visible;">
@@ -129,7 +128,7 @@ export function printBill(bill: Bill): void {
       In Word: ${bill.amountInWords}. = ${Number(bill.grandTotal).toLocaleString()}/-
     </div>
 
-    <div style="margin-top:48px;display:flex;justify-content:flex-end;">
+    <div style="margin-top:80px;display:flex;justify-content:flex-end;">
       <div style="text-align:center;">
         <div style="width:160px;border-top:1px solid #000;padding-top:4px;font-size:10px;">Authorized Signature</div>
       </div>
