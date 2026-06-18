@@ -81,26 +81,30 @@ export default function ViewBillPage() {
       <div className="bg-white shadow-lg rounded-lg overflow-hidden" id="bill-preview">
         <div className="p-8">
           {/* Company Header */}
-          <div className="text-center space-y-1 pb-4 border-b-2 border-gray-800">
-            <div className="flex items-center justify-center gap-3 mb-2">
-              <img src="/logo.png" alt="Newton Scientific Co." className="h-14 w-auto object-contain" />
-              <h1 className="text-2xl font-black tracking-tight text-gray-900">NEWTON SCIENTIFIC CO.</h1>
+          <div className="flex items-stretch border-t border-b border-gray-400 mb-3" style={{minHeight: '140px'}}>
+            <div className="flex flex-col items-center justify-center pl-0 pr-3 py-3" style={{width: '46%'}}>
+              <img src="/logo.png" alt="Newton Scientific Co." className="h-24 w-auto object-contain" />
+              <p className="text-[11px] text-gray-800 text-center mt-2 leading-snug">
+                We Supply a Wide Range of Scientific &amp; Textile<br/>
+                Laboratory Instruments, Apparatus, Chemicals,<br/>
+                Glassware and Laboratory Accessories.
+              </p>
             </div>
-            <p className="text-xs text-gray-600">
-              Importer &amp; Supplier of All Kinds of Scientific and Textile Lab Instruments
-            </p>
-            <p className="text-xs text-gray-600">
-              Laboratory Chemicals, Pharmaceutical Raw Materials, etc.
-            </p>
-            <p className="text-sm font-bold text-gray-800">
-              32/1. Hatkhola road, Suveccha Plaza Tikatuli, Dhaka-1203
-            </p>
-            <p className="text-xs text-gray-600">
-              Phone: +88 01815-491313, +88 01766426553 &nbsp;|&nbsp; Email: newtonscientificco@gmail.com
-            </p>
-            <p className="text-xs text-gray-600">
-              VAT No.- 000322409-0307, TIN No.- 211754216587
-            </p>
+            <div className="relative flex-none" style={{width: '28px'}}>
+              <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 28 140">
+                <line x1="8" y1="0" x2="18" y2="140" stroke="#999" strokeWidth="1"/>
+                <line x1="15" y1="0" x2="25" y2="140" stroke="#999" strokeWidth="1"/>
+              </svg>
+            </div>
+            <div className="flex-1 flex flex-col justify-center p-3 pl-4">
+              <p className="text-xs text-gray-900 font-medium mb-0.5">Address: 32/1. Hatkhola road, Suveccha Plaza Tikatuli,</p>
+              <p className="text-xs text-gray-900 font-medium mb-2">Dhaka-1203(Opposite of Ovishar Cinema Hall)</p>
+              <p className="text-xs text-gray-900 font-medium mb-0.5">Phone: +88 01815-491313, +88 01766426553</p>
+              <p className="text-xs mb-0.5"><span className="text-blue-700 font-medium">Email: newtonscientificco@gmail.com</span></p>
+              <p className="text-xs mb-2"><span className="text-blue-700 font-medium">Website: newtonscientificbd.com</span></p>
+              <p className="text-xs text-gray-900 font-medium mb-0.5">VAT No.- 000322409-0307</p>
+              <p className="text-xs text-gray-900 font-medium">TIN No.- 211754216587</p>
+            </div>
           </div>
 
           {/* Ref + Date */}
@@ -187,27 +191,31 @@ export default function ViewBillPage() {
       {/* Challan Preview */}
       <div className="bg-white shadow-lg rounded-lg overflow-hidden">
         <div className="p-8">
-          {/* Same Company Header */}
-          <div className="text-center space-y-1 pb-4 border-b-2 border-gray-800">
-            <div className="flex items-center justify-center gap-3 mb-2">
-              <img src="/logo.png" alt="Newton Scientific Co." className="h-14 w-auto object-contain" />
-              <h1 className="text-2xl font-black tracking-tight text-gray-900">NEWTON SCIENTIFIC CO.</h1>
+          {/* Company Header */}
+          <div className="flex items-stretch border-t border-b border-gray-400 mb-3" style={{minHeight: '140px'}}>
+            <div className="flex flex-col items-center justify-center pl-0 pr-3 py-3" style={{width: '46%'}}>
+              <img src="/logo.png" alt="Newton Scientific Co." className="h-24 w-auto object-contain" />
+              <p className="text-[11px] text-gray-800 text-center mt-2 leading-snug">
+                We Supply a Wide Range of Scientific &amp; Textile<br/>
+                Laboratory Instruments, Apparatus, Chemicals,<br/>
+                Glassware and Laboratory Accessories.
+              </p>
             </div>
-            <p className="text-xs text-gray-600">
-              Importer &amp; Supplier of All Kinds of Scientific and Textile Lab Instruments
-            </p>
-            <p className="text-xs text-gray-600">
-              Laboratory Chemicals, Pharmaceutical Raw Materials, etc.
-            </p>
-            <p className="text-sm font-bold text-gray-800">
-              32/1. Hatkhola road, Suveccha Plaza Tikatuli, Dhaka-1203
-            </p>
-            <p className="text-xs text-gray-600">
-              Phone: +88 01815-491313, +88 01766426553 &nbsp;|&nbsp; Email: newtonscientificco@gmail.com
-            </p>
-            <p className="text-xs text-gray-600">
-              VAT No.- 000322409-0307, TIN No.- 211754216587
-            </p>
+            <div className="relative flex-none" style={{width: '28px'}}>
+              <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none" viewBox="0 0 28 140">
+                <line x1="8" y1="0" x2="18" y2="140" stroke="#999" strokeWidth="1"/>
+                <line x1="15" y1="0" x2="25" y2="140" stroke="#999" strokeWidth="1"/>
+              </svg>
+            </div>
+            <div className="flex-1 flex flex-col justify-center p-3 pl-4">
+              <p className="text-xs text-gray-900 font-medium mb-0.5">Address: 32/1. Hatkhola road, Suveccha Plaza Tikatuli,</p>
+              <p className="text-xs text-gray-900 font-medium mb-2">Dhaka-1203(Opposite of Ovishar Cinema Hall)</p>
+              <p className="text-xs text-gray-900 font-medium mb-0.5">Phone: +88 01815-491313, +88 01766426553</p>
+              <p className="text-xs mb-0.5"><span className="text-blue-700 font-medium">Email: newtonscientificco@gmail.com</span></p>
+              <p className="text-xs mb-2"><span className="text-blue-700 font-medium">Website: newtonscientificbd.com</span></p>
+              <p className="text-xs text-gray-900 font-medium mb-0.5">VAT No.- 000322409-0307</p>
+              <p className="text-xs text-gray-900 font-medium">TIN No.- 211754216587</p>
+            </div>
           </div>
 
           <div className="flex justify-between items-center mt-3 pb-2 border-b border-gray-300 text-sm">

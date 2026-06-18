@@ -4,16 +4,30 @@ import { legacyUnitQtyDisplay, legacyTotalQtyDisplay } from '@/utils/unitLabels'
 function companyHeader(): string {
   const logoUrl = `${window.location.origin}/logo.png`;
   return `
-    <div style="text-align:center;padding-bottom:10px;border-bottom:2.5px solid #000;margin-bottom:8px;">
-      <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:4px;">
-        <img src="${logoUrl}" style="height:52px;width:auto;" alt="Newton Scientific Co." />
-        <strong style="font-size:22px;font-weight:900;font-family:Arial,sans-serif;letter-spacing:0.5px;color:#000;">NEWTON SCIENTIFIC CO.</strong>
+    <div style="display:flex;align-items:stretch;border-top:1px solid #999;border-bottom:1px solid #999;margin-bottom:10px;min-height:140px;">
+      <div style="flex:0 0 46%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 10px 10px 2px;">
+        <img src="${logoUrl}" style="height:100px;width:auto;" alt="Newton Scientific Co." />
+        <p style="margin:6px 0 0;font-size:10px;text-align:center;color:#222;line-height:1.5;font-weight:500;">
+          We Supply a Wide Range of Scientific &amp; Textile<br>
+          Laboratory Instruments, Apparatus, Chemicals,<br>
+          Glassware and Laboratory Accessories.
+        </p>
       </div>
-      <p style="margin:2px 0;font-size:10.5px;font-weight:bold;color:#000;">Importer &amp; Supplier of All Kinds of Scientific and Textile Lab Instruments</p>
-      <p style="margin:2px 0;font-size:10.5px;color:#000;">Laboratory Chemicals, Pharmaceutical Raw Materials, etc.</p>
-      <p style="margin:4px 0;font-size:12px;font-weight:900;color:#000;">32/1. Hatkhola road, Suveccha Plaza Tikatuli, Dhaka-1203</p>
-      <p style="margin:2px 0;font-size:10px;color:#000;">Phone: +88 01815-491313, +88 01766426553 &nbsp;&nbsp; Email: newtonscientificco@gmail.com</p>
-      <p style="margin:2px 0;font-size:10px;color:#000;">VAT No.- 000322409-0307, TIN No.- 211754216587</p>
+      <div style="position:relative;flex:0 0 28px;overflow:visible;">
+        <svg style="position:absolute;top:0;left:0;width:100%;height:100%;" preserveAspectRatio="none" viewBox="0 0 28 140">
+          <line x1="8" y1="0" x2="18" y2="140" stroke="#999" stroke-width="1"/>
+          <line x1="15" y1="0" x2="25" y2="140" stroke="#999" stroke-width="1"/>
+        </svg>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:10px 8px 10px 14px;">
+        <p style="margin:0 0 3px;font-size:11px;color:#111;font-weight:500;">Address: 32/1. Hatkhola road, Suveccha Plaza Tikatuli,</p>
+        <p style="margin:0 0 9px;font-size:11px;color:#111;font-weight:500;">Dhaka-1203(Opposite of Ovishar Cinema Hall)</p>
+        <p style="margin:0 0 3px;font-size:11px;color:#111;font-weight:500;">Phone: +88 01815-491313, +88 01766426553</p>
+        <p style="margin:0 0 3px;font-size:11px;color:#111;font-weight:500;">Email: <span style="color:#1a5fb4;">newtonscientificco@gmail.com</span></p>
+        <p style="margin:0 0 9px;font-size:11px;color:#111;font-weight:500;">Website: <span style="color:#1a5fb4;">newtonscientificbd.com</span></p>
+        <p style="margin:0 0 3px;font-size:11px;color:#111;font-weight:500;">VAT No.- 000322409-0307</p>
+        <p style="margin:0;font-size:11px;color:#111;font-weight:500;">TIN No.- 211754216587</p>
+      </div>
     </div>
   `;
 }

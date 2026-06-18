@@ -1,6 +1,17 @@
 import { Bill } from '@/types';
 import { legacyUnitQtyDisplay, legacyTotalQtyDisplay } from '@/utils/unitLabels';
 
+async function loadImageAsDataURL(url: string): Promise<string> {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
 export async function generateInvoicePDF(bill: Bill): Promise<void> {
   const { default: jsPDF } = await import('jspdf');
   const { default: autoTable } = await import('jspdf-autotable');
@@ -9,50 +20,71 @@ export async function generateInvoicePDF(bill: Bill): Promise<void> {
 
   const pageWidth = 210;
   const margin = 14;
-  let y = 12;
 
-  // ── Header ──────────────────────────────────────────────────────────────────
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(20);
-  doc.text('NSC NEWTON SCIENTIFIC CO.', pageWidth / 2, y, { align: 'center' });
-  y += 7;
+  // ── Header (two-column layout) ───────────────────────────────────────────────
+  const headerTop = 10;
+  const headerH = 52;
+  const leftColW = 86;
+  const divX1 = margin + leftColW;       // 100
+  const rightColX = divX1 + 10;         // 110
 
+  // Top border line
+  doc.setDrawColor(150, 150, 150);
+  doc.setLineWidth(0.5);
+  doc.line(margin, headerTop - 2, pageWidth - margin, headerTop - 2);
+
+  // Logo (flush left, minimal left offset)
+  try {
+    const logoData = await loadImageAsDataURL(`${window.location.origin}/logo.png`);
+    const logoW = 65;
+    const logoH = 32;
+    const logoX = margin + 1;
+    doc.addImage(logoData, 'PNG', logoX, headerTop + 1, logoW, logoH);
+  } catch {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text('NEWTON SCIENTIFIC CO.', margin + leftColW / 2, headerTop + 18, { align: 'center' });
+  }
+
+  // Description below logo
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
-  doc.text(
-    'Importer & Supplier of All Kinds of Scientific and Textile Lab Instruments',
-    pageWidth / 2, y, { align: 'center' }
-  );
-  y += 4.5;
-  doc.text(
-    'Laboratory Chemicals, Pharmaceutical Raw Materials, etc.',
-    pageWidth / 2, y, { align: 'center' }
-  );
-  y += 5.5;
+  doc.setTextColor(30, 30, 30);
+  const descCx = margin + leftColW / 2;
+  doc.text('We Supply a Wide Range of Scientific & Textile', descCx, headerTop + 37, { align: 'center' });
+  doc.text('Laboratory Instruments, Apparatus, Chemicals,', descCx, headerTop + 41.5, { align: 'center' });
+  doc.text('Glassware and Laboratory Accessories.', descCx, headerTop + 46, { align: 'center' });
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
-  doc.text(
-    '32/1. Hatkhola road, Suveccha Plaza Tikatuli, Dhaka-1203',
-    pageWidth / 2, y, { align: 'center' }
-  );
-  y += 5;
+  // Diagonal separator (two thin lines)
+  doc.setDrawColor(150, 150, 150);
+  doc.setLineWidth(0.5);
+  doc.line(divX1, headerTop - 2, divX1 + 4, headerTop + headerH + 2);
+  doc.line(divX1 + 4, headerTop - 2, divX1 + 8, headerTop + headerH + 2);
 
+  // Right column — contact info
+  doc.setTextColor(0, 0, 0);
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.text(
-    'Phone: +88 01815-491313, +88 01766426553  Email: newtonscientificco@gmail.com',
-    pageWidth / 2, y, { align: 'center' }
-  );
-  y += 4.5;
-  doc.text(
-    'VAT No.- 000322409-0307, TIN No.- 211754216587',
-    pageWidth / 2, y, { align: 'center' }
-  );
-  y += 5;
+  doc.setFontSize(9);
+  let ry = headerTop + 7;
+  doc.text('Address: 32/1. Hatkhola road, Suveccha Plaza Tikatuli,', rightColX, ry);
+  ry += 5;
+  doc.text('Dhaka-1203(Opposite of Ovishar Cinema Hall)', rightColX, ry);
+  ry += 8;
+  doc.text('Phone: +88 01815-491313, +88 01766426553', rightColX, ry);
+  ry += 5;
+  doc.text('Email: newtonscientificco@gmail.com', rightColX, ry);
+  ry += 5;
+  doc.text('Website: newtonscientificbd.com', rightColX, ry);
+  ry += 8;
+  doc.text('VAT No.- 000322409-0307', rightColX, ry);
+  ry += 5;
+  doc.text('TIN No.- 211754216587', rightColX, ry);
 
-  // Thick separator line
-  doc.setLineWidth(0.6);
+  // Header bottom separator line
+  let y = headerTop + headerH + 2;
+  doc.setDrawColor(150, 150, 150);
+  doc.setLineWidth(0.5);
   doc.line(margin, y, pageWidth - margin, y);
   y += 4;
 
